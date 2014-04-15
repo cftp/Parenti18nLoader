@@ -1,62 +1,65 @@
-n Name: (#113391) Parent Theme i18n Autoloader
- * Description: Load Twenty12 Child theme translation files automagically from Parent
+<?php
+/*
+ * Plugin Name: Parent Theme i18n Autoloader
+ * Description: Load Child theme translation files auto-magically from Parent, special credit to KaiserJ
  */
 
-add_action( 'muplugins_loaded', array( 'WPSE113391Parenti18nLoader', 'getInstance' ) );
-class WPSE113391Parenti18nLoader
-{
-    public static $instance = null;
+add_action( 'muplugins_loaded', array( 'cftpParenti18nLoader', 'getInstance' ) );
 
-    private $theme = null;
+/**
+ * Class cftpParenti18nLoader
+ *
+ * Based heavily on code from http://wordpress.stackexchange.com/a/113396/736
+ *
+ */
+class cftpParenti18nLoader {
+	public static $instance = null;
 
-    public static function getInstance()
-    {
-        null === self::$instance AND self::$instance = new self;
-        return self::$instance;
-    }
+	private $theme = null;
 
-    public function __construct()
-    {
-        add_action( 'after_setup_theme', array( $this, 'i18nAutoloader' ), 20 );
-    }
+	public static function getInstance() {
+		null === self::$instance AND self::$instance = new self;
 
-    public function setTheme( $theme )
-    {
-        return $this->theme = $theme;
-    }
+		return self::$instance;
+	}
 
-    public function getTheme()
-    {
-        return $this->theme;
-    }
+	public function __construct() {
+		add_action( 'after_setup_theme', array( $this, 'i18nAutoloader' ), 20 );
+	}
 
-    public function i18nAutoloader()
-    {
-        if ( ! is_child_theme() )
-            return;
+	public function setTheme( $theme ) {
+		return $this->theme = $theme;
+	}
 
-        $current_theme = wp_get_theme();
-        if ( '' === $current_theme->parent()->get( 'DomainPath' ) )
-        {
-            $this->setTheme( $current_theme->parent() );
-            add_filter( 'override_load_textdomain', array( $this, 'overrideI18nLoader' ), 10, 3 );
-        }
-        $current_theme->parent()->load_textdomain();
-    }
+	public function getTheme() {
+		return $this->theme;
+	}
 
-    public function overrideI18nLoader( $activate, $domain, $mofile )
-    {
-        // Don't intercept anything else: Self removing
-        remove_filter( current_filter(), __FUNCTION__ );
+	public function i18nAutoloader() {
+		if ( ! is_child_theme() ) {
+			return;
+		}
 
-        // Rebuild the internals of WP_Theme::get_stylesheet_directory() and load_theme_textdomain()
-        $theme  = $this->getTheme();
-        $path   = trailingslashit( $theme->get_theme_root() ).$theme->get_template();
-        $locale = apply_filters( 'theme_locale', get_locale(), $domain );
+		$current_theme = wp_get_theme();
+		if ( '' === $current_theme->parent()->get( 'DomainPath' ) ) {
+			$this->setTheme( $current_theme->parent() );
+			add_filter( 'override_load_textdomain', array( $this, 'overrideI18nLoader' ), 10, 3 );
+		}
+		$current_theme->parent()->load_textdomain();
+	}
 
-        load_textdomain( $domain, "{$path}/{$locale}.mo" );
+	public function overrideI18nLoader( $activate, $domain, $mofile ) {
+		// Don't intercept anything else: Self removing
+		remove_filter( current_filter(), __FUNCTION__ );
 
-        // Return true to abort further attempts
-        return true;
-    }
+		// Rebuild the internals of WP_Theme::get_stylesheet_directory() and load_theme_textdomain()
+		$theme  = $this->getTheme();
+		$path   = trailingslashit( $theme->get_theme_root() ) . $theme->get_template();
+		$locale = apply_filters( 'theme_locale', get_locale(), $domain );
+
+		load_textdomain( $domain, "{$path}/{$locale}.mo" );
+
+		// Return true to abort further attempts
+		return true;
+	}
 }
