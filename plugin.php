@@ -4,8 +4,7 @@
  * Description: Load Child theme translation files auto-magically from Parent, special credit to KaiserJ
  */
 
-add_action( 'muplugins_loaded', array( 'cftpParenti18nLoader', 'getInstance' ) );
-
+add_action( 'after_setup_theme', array( new cftpParenti18nLoader, 'i18nAutoloader' ), 20 );
 /**
  * Class cftpParenti18nLoader
  *
@@ -24,7 +23,7 @@ class cftpParenti18nLoader {
 	}
 
 	public function __construct() {
-		add_action( 'after_setup_theme', array( $this, 'i18nAutoloader' ), 20 );
+		//
 	}
 
 	public function setTheme( $theme ) {
@@ -50,7 +49,7 @@ class cftpParenti18nLoader {
 
 	public function overrideI18nLoader( $activate, $domain, $mofile ) {
 		// Don't intercept anything else: Self removing
-		remove_filter( current_filter(), __FUNCTION__ );
+		remove_filter( current_filter(), array( $this, __FUNCTION__)  );
 
 		// Rebuild the internals of WP_Theme::get_stylesheet_directory() and load_theme_textdomain()
 		$theme  = $this->getTheme();
